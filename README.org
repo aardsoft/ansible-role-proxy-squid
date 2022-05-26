@@ -1,0 +1,159 @@
+* Squid caching proxy configuration                                   :TOC_4:
+  - [[#introduction][Introduction]]
+  - [[#configuration][Configuration]]
+    - [[#visible_hostname][visible_hostname]]
+    - [[#dns_v4_first][dns_v4_first]]
+    - [[#forwarded_for][forwarded_for]]
+    - [[#acl][acl]]
+    - [[#cache_user-cache_group][cache_user, cache_group]]
+    - [[#cache_peers][cache_peers]]
+    - [[#cache_access][cache_access]]
+    - [[#config_dir][config_dir]]
+    - [[#firewalld_zones][firewalld_zones]]
+    - [[#http_access][http_access]]
+    - [[#http_port][http_port]]
+  - [[#sample-configuration][Sample configuration]]
+
+** Introduction
+This role provides simple configuration for the [[http://www.squid-cache.org/][Squid caching proxy]] server.
+
+The only dependency is [[https://github.com/aardsoft/ansible-data-utilities][data-utilities]] for the package installation.
+
+** Configuration
+
+The configuration happens inside a YAML structure named =proxy_squid=.
+
+*** visible_hostname
+Configures the [[http://www.squid-cache.org/Doc/config/visible_hostname/][visible hostname]] of the proxy server. It often is a good idea to have this set.
+
+*** dns_v4_first
+Configures the [[http://www.squid-cache.org/Doc/config/dns_v4_first/][network protocol preferences]]. On networks with v4 only or bad v6 connectivity it makes sense to set this to =true=.
+
+*** forwarded_for
+Configures the [[http://www.squid-cache.org/Doc/config/forwarded_for/][X-Forwarded-For header]]. To hide the proxy set this to =delete=. When using =on= (default) or =off= the YAML needs to be quoted to prevent automagic bool conversion.
+
+*** acl
+A structure for configuring [[http://www.squid-cache.org/Doc/config/acl/][ACLs]] with an ACL type in =type= and a list of matching elements in =elements=. Options, if any, need to be specified in the =type=:
+
+#+BEGIN_SRC yaml
+  acl:
+    example-domain:
+      type: dstdomain
+      elements:
+        - .foo.example.com
+    example-net:
+      type: src
+      elements:
+        - 10.10.10.0/24
+        - 10.10.1.0/24
+#+END_SRC
+
+There is special handling for the ACLs named =localnet= (type =src=), =SSL_ports= (type =port=), =Safe_ports= (type =port=) and =CONNECT= (type =method=). If any of those is omitted or defined with a different type the default squid ACL with this name is inserted instead.
+
+*** cache_user, cache_group
+Configures the [[http://www.squid-cache.org/Doc/config/cache_effective_user/][effective user]] and [[http://www.squid-cache.org/Doc/config/cache_effective_group/][effective group.]] Both default to =squid=.
+
+*** cache_peers
+A structure for configuring [[http://www.squid-cache.org/Doc/config/cache_peer/][cache peers]] and [[http://www.squid-cache.org/Doc/config/cache_peer_access/][cache peer access]]. Top level sub keys can all be omitted, and are =type= (default: =parent=), =proxy_port= (default: =3128=), =icp_port= (default: =0=) and =options= (default: '').
+
+Additionally the keys =allow= and =deny= take a list of ACL names to configure [[http://www.squid-cache.org/Doc/config/cache_peer_access/][cache peer access]]. ACLs specified here but not configured will be ignored to avoid startup errors.
+
+#+BEGIN_SRC yaml
+  cache_peers:
+    10.11.12.13:
+      proxy_port: 80
+      options: noquery default
+      deny:
+        - example-domain
+        - example-net
+    192.168.0.1:
+      proxy_port: 3128
+      options: noquery default
+      deny:
+        - example-net
+#+END_SRC
+
+*** cache_access
+A list of elements configuring [[http://www.squid-cache.org/Doc/config/always_direct/][always_direct]] and [[http://www.squid-cache.org/Doc/config/never_direct/][never_direct]]. Lines can start with =never_direct= or =always_direct=. If those keywords are omitted the entry is treated as =always_direct=:
+
+#+BEGIN_SRC yaml
+  cache_access:
+    - deny ilo-domain
+    - allow example-domain
+    - allow example-net
+    - never_direct allow all
+#+END_SRC
+
+*** config_dir
+The directory containing squid configuration files. Defaults to =/etc/squid=.
+
+*** firewalld_zones
+A list of firewalld to configure access for. Currently only works when squid is running on the default port (=3128=).
+
+*** http_access
+A list of elements configuring [[http://www.squid-cache.org/Doc/config/http_access/][http_access]]. When omitted the squid default configuration is used:
+
+#+BEGIN_SRC yaml
+  http_access:
+    - deny !Safe_ports
+    - deny CONNECT !SSL_ports
+    - allow localhost manager
+    - deny manager
+    - deny to_localhost
+    - allow localnet
+    - allow localhost
+    - deny all
+#+END_SRC
+
+No ACL verification is performed - specifying an invalid ACL will lead to squid not starting up.
+
+*** http_port
+Configures the [[http://www.squid-cache.org/Doc/config/http_port/][port squid listens on]]. Defaults to =3128=.
+
+** Sample configuration
+
+#+BEGIN_SRC yaml
+proxy_squid:
+  visible_hostname: my-proxy.example.com
+  dns_v4_first: true
+  forwarded_for: delete
+  http_access:
+    - deny !Safe_ports
+    - allow localhost manager
+    - deny manager
+    - deny to_localhost
+    - allow localnet
+    - allow localhost
+    - deny all
+  cache_access:
+    - deny ilo-domain
+    - allow example-domain
+    - allow example-net
+    - never_direct allow all
+  cache_peers:
+    10.11.12.13:
+      proxy_port: 80
+      options: noquery default
+      deny:
+        - example-domain
+        - example-net
+    192.168.0.1:
+      proxy_port: 3128
+      options: noquery default
+      deny:
+        - example-net
+  acl:
+    ilo-domain:
+      type: dstdomain
+      elements:
+        - .ilo.example.com
+    example-domain:
+      type: dstdomain
+      elements:
+        - .foo.example.com
+    example-net:
+      type: src
+      elements:
+        - 10.10.10.0/24
+        - 10.10.1.0/24
+#+END_SRC

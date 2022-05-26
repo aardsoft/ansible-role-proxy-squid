@@ -8,7 +8,7 @@
       - squid
 
 - include_role:
-    name: basic-host
+    name: data-utilities
     tasks_from: install_packages
 
 - name: configure firewall for squid (default port)
