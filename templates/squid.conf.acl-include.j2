@@ -1,11 +1,4 @@
-{% if proxy_squid.acl.CONNECT is defined and
-      proxy_squid.acl.CONNECT.elements is defined
-      proxy_squid.acl.CONNECT.type is defined and
-      proxy_squid.acl.CONNECT.type == "method" %}
- {% for element in proxy_squid.acl.CONNECT.elements  %}
-acl CONNECT method {{element}}
- {% endfor %}
-{% else %}
+{% if proxy_squid.acl.CONNECT is undefined  %}
 acl CONNECT method CONNECT
 {% endif %}
 

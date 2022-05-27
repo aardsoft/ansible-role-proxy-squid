@@ -1,10 +1,4 @@
-{% if proxy_squid.acl.localnet is defined and
-      proxy_squid.acl.localnet.type is defined and
-      proxy_squid.acl.localnet.type == "src" %}
- {% for element in proxy_squid.acl.localnet.elements|default([])  %}
-acl localnet src {{element}}
- {% endfor %}
-{% else %}
+{% if proxy_squid.acl.localnet is undefined %}
 # Configuration for acl localnet missing or invalid, using default
 #
 # Example rule allowing access from your local networks.

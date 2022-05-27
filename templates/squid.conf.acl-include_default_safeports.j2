@@ -1,10 +1,4 @@
-{% if proxy_squid.acl.Safe_ports is defined and
-      proxy_squid.acl.Safe_ports.type is defined and
-      proxy_squid.acl.Safe_ports.type == "port" %}
- {% for element in proxy_squid.acl.Safe_ports.elements|default([])  %}
-acl Safe_ports port {{element}}
- {% endfor %}
-{% else %}
+{% if proxy_squid.acl.Safe_ports is undefined %}
 # Configuration for acl Safe_ports missing or invalid, using default
 acl Safe_ports port 80		# http
 acl Safe_ports port 21		# ftp

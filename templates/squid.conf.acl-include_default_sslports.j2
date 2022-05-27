@@ -1,10 +1,4 @@
-{% if proxy_squid.acl.SSL_ports is defined and
-      proxy_squid.acl.SSL_ports.type is defined and
-      proxy_squid.acl.SSL_ports.type == "port" %}
- {% for element in proxy_squid.acl.SSL_ports.elements|default([])  %}
-acl SSL_ports port {{element}}
- {% endfor %}
-{% else %}
+{% if proxy_squid.acl.SSL_ports is undefined %}
 # Configuration for acl SSL_ports missing or invalid, using default
 acl SSL_ports port 443
 {% endif %}
