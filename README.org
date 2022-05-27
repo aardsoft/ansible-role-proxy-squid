@@ -26,6 +26,8 @@ The configuration happens inside a YAML structure named =proxy_squid=.
 *** visible_hostname
 Configures the [[http://www.squid-cache.org/Doc/config/visible_hostname/][visible hostname]] of the proxy server. It often is a good idea to have this set.
 
+This can also be configured with the =proxy_squid_hostname= variable to allow sharing the main configuration structure between multiple proxis with different host names.
+
 *** dns_v4_first
 Configures the [[http://www.squid-cache.org/Doc/config/dns_v4_first/][network protocol preferences]]. On networks with v4 only or bad v6 connectivity it makes sense to set this to =true=.
 

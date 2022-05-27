@@ -4,7 +4,9 @@
 # Recommended minimum configuration:
 #
 
-{% if proxy_squid.visible_hostname is defined %}
+{% if proxy_squid_hostname is defined %}
+visible_hostname {{proxy_squid_hostname}}
+{% elif proxy_squid.visible_hostname is defined %}
 visible_hostname {{proxy_squid.visible_hostname}}
 {% endif %}
 
