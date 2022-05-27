@@ -27,6 +27,22 @@
     proxy_squid.firewall_zones is defined and
     proxy_squid.port is undefined
 
+- name: configure firewall for squid (custom port)
+  firewalld:
+    zone: "{{__zone}}"
+    port: "{{proxy_squid.port}}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  with_items: "{{proxy_squid.firewall_zones}}"
+  loop_control:
+    loop_var: __zone
+  when: >
+    (firewalld_available is defined and
+    firewalld_available == True) and
+    proxy_squid.firewall_zones is defined and
+    proxy_squid.port is defined
+
 - name: configure firewall rules
   include_role:
     name: basic-host

@@ -90,7 +90,7 @@ A list of elements configuring [[http://www.squid-cache.org/Doc/config/always_di
 The directory containing squid configuration files. Defaults to =/etc/squid=.
 
 *** firewalld_zones
-A list of firewalld to configure access for. Currently only works when squid is running on the default port (=3128=).
+A list of firewalld to configure access for. Note that old ports need to be disabled separately when changing ports on a deployed squid instance.
 
 *** http_access
 A list of elements configuring [[http://www.squid-cache.org/Doc/config/http_access/][http_access]]. When omitted the squid default configuration is used:
