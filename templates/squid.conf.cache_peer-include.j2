@@ -1,0 +1,13 @@
+{% for cache_peer in proxy_squid.cache_peers|default({}) %}
+cache_peer {{cache_peer}} {{proxy_squid.cache_peers[cache_peer].type|default('parent')}} {{proxy_squid.cache_peers[cache_peer].proxy_port|default('3128')}} {{proxy_squid.cache_peers[cache_peer].icp_port|default('0')}} {{proxy_squid.cache_peers[cache_peer].options|default('')}}
+{% if proxy_squid.cache_peers[cache_peer].allow is defined %}
+cache_peer_access {{cache_peer}} allow{% for entry in proxy_squid.cache_peers[cache_peer].allow %}{% if proxy_squid.acl[entry] is defined %}  {{entry}}{% endif %}{% endfor %}
+{% endif %}
+{% if proxy_squid.cache_peers[cache_peer].deny is defined %}
+cache_peer_access {{cache_peer}} deny{% for entry in proxy_squid.cache_peers[cache_peer].deny %}{% if proxy_squid.acl[entry] is defined %}  {{entry}}{% endif %}{% endfor %}
+{% endif %}
+
+{% endfor %}
+
+cache_effective_user {{proxy_squid.cache_user|default('squid')}}
+cache_effective_group {{proxy_squid.cache_group|default('squid')}}

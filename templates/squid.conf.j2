@@ -17,157 +17,16 @@ dns_v4_first on
 forwarded_for {{proxy_squid.forwarded_for|default("on")}}
 shutdown_lifetime {{proxy_squid.shutdown_lifetime|default('1 seconds')}}
 
-{% if proxy_squid.acl.localnet is defined and
-      proxy_squid.acl.localnet.elements is defined
-      proxy_squid.acl.localnet.type is defined and
-      proxy_squid.acl.localnet.type == "src" %}
- {% for element in proxy_squid.acl.localnet.elements  %}
-acl localnet port {{element}}
- {% endfor %}
-{% else %}
-# Configuration for acl localnet missing or invalid, using default
-#
-# Example rule allowing access from your local networks.
-# Adapt to list your (internal) IP networks from where browsing
-# should be allowed
-acl localnet src 0.0.0.1-0.255.255.255	# RFC 1122 "this" network (LAN)
-acl localnet src 10.0.0.0/8		# RFC 1918 local private network (LAN)
-acl localnet src 100.64.0.0/10		# RFC 6598 shared address space (CGN)
-acl localnet src 169.254.0.0/16 	# RFC 3927 link-local (directly plugged) machines
-acl localnet src 172.16.0.0/12		# RFC 1918 local private network (LAN)
-acl localnet src 192.168.0.0/16		# RFC 1918 local private network (LAN)
-acl localnet src fc00::/7       	# RFC 4193 local private network range
-acl localnet src fe80::/10      	# RFC 4291 link-local (directly plugged) machines
-{% endif %}
+{% include "squid.conf.acl-include_default_localnet.j2" %}
+{% include "squid.conf.acl-include_default_sslports.j2" %}
+{% include "squid.conf.acl-include_default_safeports.j2" %}
+{% include "squid.conf.acl-include.j2" %}
 
-{% if proxy_squid.acl.SSL_ports is defined and
-      proxy_squid.acl.SSL_ports.elements is defined
-      proxy_squid.acl.SSL_ports.type is defined and
-      proxy_squid.acl.SSL_ports.type == "port" %}
- {% for element in proxy_squid.acl.SSL_ports.elements  %}
-acl SSL_ports port {{element}}
- {% endfor %}
-{% else %}
-# Configuration for acl SSL_ports missing or invalid, using default
-acl SSL_ports port 443
-{% endif %}
+{% include "squid.conf.cache_peer-include.j2" %}
 
-{% if proxy_squid.acl.Safe_ports is defined and
-      proxy_squid.acl.Safe_ports.elements is defined
-      proxy_squid.acl.Safe_ports.type is defined and
-      proxy_squid.acl.Safe_ports.type == "port" %}
- {% for element in proxy_squid.acl.Safe_ports.elements  %}
-acl Safe_ports port {{element}}
- {% endfor %}
-{% else %}
-# Configuration for acl Safe_ports missing or invalid, using default
-acl Safe_ports port 80		# http
-acl Safe_ports port 21		# ftp
-acl Safe_ports port 443		# https
-acl Safe_ports port 70		# gopher
-acl Safe_ports port 210		# wais
-acl Safe_ports port 1025-65535	# unregistered ports
-acl Safe_ports port 280		# http-mgmt
-acl Safe_ports port 488		# gss-http
-acl Safe_ports port 591		# filemaker
-acl Safe_ports port 777		# multiling http
-{% endif %}
+{% include "squid.conf.cache_access-include.j2" %}
 
-
-{% if proxy_squid.acl.CONNECT is defined and
-      proxy_squid.acl.CONNECT.elements is defined
-      proxy_squid.acl.CONNECT.type is defined and
-      proxy_squid.acl.CONNECT.type == "method" %}
- {% for element in proxy_squid.acl.CONNECT.elements  %}
-acl CONNECT method {{element}}
- {% endfor %}
-{% else %}
-acl CONNECT method CONNECT
-{% endif %}
-
-{% if proxy_squid.acl is defined %}
-  {% for acl in proxy_squid.acl %}
-{% if proxy_squid.acl[acl].type is defined and proxy_squid.acl[acl].elements %}
-    {% for element in proxy_squid.acl[acl].elements %}
-acl {{acl}} {{proxy_squid.acl[acl].type}} {{element}}
-    {% endfor %}
-{% else %}
-# incomplete ACL definiton: {{acl}}
-{% endif %}
-  {% endfor %}
-{% endif %}
-
-{% for cache_peer in proxy_squid.cache_peers|default({}) %}
-cache_peer {{cache_peer}} {{proxy_squid.cache_peers[cache_peer].type|default('parent')}} {{proxy_squid.cache_peers[cache_peer].proxy_port|default('3128')}} {{proxy_squid.cache_peers[cache_peer].icp_port|default('0')}} {{proxy_squid.cache_peers[cache_peer].options|default('')}}
-{% if proxy_squid.cache_peers[cache_peer].allow is defined %}
-cache_peer_access {{cache_peer}} allow{% for entry in proxy_squid.cache_peers[cache_peer].allow %}{% if proxy_squid.acl[entry] is defined %}  {{entry}}{% endif %}{% endfor %}
-{% endif %}
-{% if proxy_squid.cache_peers[cache_peer].deny is defined %}
-cache_peer_access {{cache_peer}} deny{% for entry in proxy_squid.cache_peers[cache_peer].deny %}{% if proxy_squid.acl[entry] is defined %}  {{entry}}{% endif %}{% endfor %}
-{% endif %}
-
-{% endfor %}
-
-cache_effective_user {{proxy_squid.cache_user|default('squid')}}
-cache_effective_group {{proxy_squid.cache_group|default('squid')}}
-
-{% if proxy_squid.cache_access is defined %}
-  {% for rule in proxy_squid.cache_access %}
-    {% if rule.startswith("always_direct") or rule.startswith("never_direct") %}
-{{rule}}
-    {% else %}
-always_direct {{rule}}
-    {% endif %}
-  {% endfor %}
-{% endif %}
-
-{% if proxy_squid.http_access is defined %}
-  {% for rule in proxy_squid.http_access %}
-http_access {{rule}}
-  {% endfor %}
-{% else %}
-# http_access configuration missing, using defaults.
-#
-# Recommended minimum Access Permission configuration:
-#
-# Deny requests to certain unsafe ports
-http_access deny !Safe_ports
-
-# Deny CONNECT to other than secure SSL ports
-http_access deny CONNECT !SSL_ports
-
-# Only allow cachemgr access from localhost
-http_access allow localhost manager
-http_access deny manager
-
-# We strongly recommend the following be uncommented to protect innocent
-# web applications running on the proxy server who think the only
-# one who can access services on "localhost" is a local user
-http_access deny to_localhost
-
-#
-# INSERT YOUR OWN RULE(S) HERE TO ALLOW ACCESS FROM YOUR CLIENTS
-#
-
-# Example rule allowing access from your local networks.
-# Adapt localnet in the ACL section to list your (internal) IP networks
-# from where browsing should be allowed
-http_access allow localnet
-http_access allow localhost
-
-# And finally deny all other access to this proxy
-http_access deny all
-{% endif %}
-
-# Squid normally listens to port 3128
-http_port {{proxy_squid.port|default('3128')}}
-
-# Uncomment and adjust the following to add a disk cache directory.
-#cache_dir ufs /var/spool/squid 100 16 256
-{% if proxy_squid.cache_directories is defined %}
- {% for dir in proxy_squid.cache_directories %}
- {% endfor %}
-{% endif %}
+{% include "squid.conf.http_access-include.j2" %}
 
 # Leave coredumps in the first cache dir
 coredump_dir /var/spool/squid

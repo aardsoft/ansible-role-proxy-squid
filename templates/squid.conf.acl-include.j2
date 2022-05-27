@@ -1,0 +1,22 @@
+{% if proxy_squid.acl.CONNECT is defined and
+      proxy_squid.acl.CONNECT.elements is defined
+      proxy_squid.acl.CONNECT.type is defined and
+      proxy_squid.acl.CONNECT.type == "method" %}
+ {% for element in proxy_squid.acl.CONNECT.elements  %}
+acl CONNECT method {{element}}
+ {% endfor %}
+{% else %}
+acl CONNECT method CONNECT
+{% endif %}
+
+{% if proxy_squid.acl is defined %}
+  {% for acl in proxy_squid.acl %}
+{% if proxy_squid.acl[acl].type is defined and proxy_squid.acl[acl].elements is defined %}
+    {% for element in proxy_squid.acl[acl].elements %}
+acl {{acl}} {{proxy_squid.acl[acl].type}} {{element}}
+    {% endfor %}
+{% else %}
+# incomplete ACL definiton: {{acl}}
+{% endif %}
+  {% endfor %}
+{% endif %}

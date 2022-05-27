@@ -1,0 +1,19 @@
+{% if proxy_squid.acl.Safe_ports is defined and
+      proxy_squid.acl.Safe_ports.type is defined and
+      proxy_squid.acl.Safe_ports.type == "port" %}
+ {% for element in proxy_squid.acl.Safe_ports.elements|default([])  %}
+acl Safe_ports port {{element}}
+ {% endfor %}
+{% else %}
+# Configuration for acl Safe_ports missing or invalid, using default
+acl Safe_ports port 80		# http
+acl Safe_ports port 21		# ftp
+acl Safe_ports port 443		# https
+acl Safe_ports port 70		# gopher
+acl Safe_ports port 210		# wais
+acl Safe_ports port 1025-65535	# unregistered ports
+acl Safe_ports port 280		# http-mgmt
+acl Safe_ports port 488		# gss-http
+acl Safe_ports port 591		# filemaker
+acl Safe_ports port 777		# multiling http
+{% endif %}

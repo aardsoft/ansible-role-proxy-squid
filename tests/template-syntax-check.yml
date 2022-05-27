@@ -1,0 +1,33 @@
+- debug: msg="{{config.key}} {{config.value}}"
+
+- set_fact:
+    proxy_squid: "{{config.value}}"
+
+- name: create temporary build directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: build
+  register: tmpdir
+
+- name: check template syntax (empty configuration)
+  template:
+    src: "{{__config}}.j2"
+    dest: "{{tmpdir.path}}/{{__config}}"
+  with_items:
+    - cachemgr.conf
+    - mime.conf
+    - squid.conf.acl-include
+    - squid.conf.acl-include_default_localnet
+    - squid.conf.acl-include_default_sslports
+    - squid.conf.acl-include_default_safeports
+    - squid.conf.cache_access-include
+    - squid.conf.cache_peer-include
+    - squid.conf.http_access-include
+    - squid.conf
+  loop_control:
+    loop_var: __config
+
+- name: delete temporary directory
+  ansible.builtin.file:
+    path: "{{tmpdir.path}}"
+    state: absent

@@ -1,0 +1,74 @@
+squid_configurations:
+  empty:
+  default:
+    dns_v4_first: true
+    acl:
+      localnet:
+        type: src
+        elements:
+          - 10.10.10.0/18
+      ci-lab-domains:
+        type: dstdomain
+        elements:
+          - .acme-lab.example.com
+          - .acme-lab-2.example.com
+      acme-internal:
+        type: dstdomain
+        elements:
+          - a.example.com
+          - b.example.com
+    cache_peers:
+      10.116.253.72:
+        proxy_port: 80
+        options: noquery default
+        deny:
+          - acme-internal
+    http_access:
+      - deny !Safe_ports
+      - allow localhost manager
+      - deny manager
+      - deny to_localhost
+      - allow localnet
+      - allow localhost
+      - deny all
+    cache_access:
+      - allow localnet
+      - allow ci-lab-domains
+      - allow acme-internal
+      - never_direct allow all
+  default_empty_localnet:
+    dns_v4_first: true
+    acl:
+      localnet:
+        type: src
+        elements:
+          - foo
+      ci-lab-domains:
+        type: dstdomain
+        elements:
+          - .acme-lab.example.com
+          - .acme-lab-2.example.com
+      acme-internal:
+        type: dstdomain
+        elements:
+          - a.example.com
+          - b.example.com
+    cache_peers:
+      10.116.253.72:
+        proxy_port: 80
+        options: noquery default
+        deny:
+          - acme-internal
+    http_access:
+      - deny !Safe_ports
+      - allow localhost manager
+      - deny manager
+      - deny to_localhost
+      - allow localnet
+      - allow localhost
+      - deny all
+    cache_access:
+      - allow localnet
+      - allow ci-lab-domains
+      - allow acme-internal
+      - never_direct allow all

@@ -1,0 +1,9 @@
+{% if proxy_squid.cache_access is defined %}
+  {% for rule in proxy_squid.cache_access %}
+    {% if rule.startswith("always_direct") or rule.startswith("never_direct") %}
+{{rule}}
+    {% else %}
+always_direct {{rule}}
+    {% endif %}
+  {% endfor %}
+{% endif %}

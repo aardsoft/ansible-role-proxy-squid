@@ -1,0 +1,11 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: include default configurations
+      include_vars: default_configs.yml
+    - name: run through tests
+      include_tasks: template-syntax-check.yml
+      with_dict: "{{squid_configurations}}"
+      loop_control:
+        loop_var: config
