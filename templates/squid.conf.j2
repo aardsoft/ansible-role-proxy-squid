@@ -17,6 +17,18 @@ dns_v4_first on
 forwarded_for {{proxy_squid.forwarded_for|default("on")}}
 shutdown_lifetime {{proxy_squid.shutdown_lifetime|default('1 seconds')}}
 
+{% if proxy_squid.positive_dns_ttl is defined %}
+positive_dns_ttl {{proxy_squid.positive_dns_ttl}}
+{% endif %}
+
+{% if proxy_squid.negative_dns_ttl is defined %}
+negative_dns_ttl {{proxy_squid.negative_dns_ttl}}
+{% endif %}
+
+{% if proxy_squid.dns_defnames is defined %}
+dns_defnames {{proxy_squid.dns_defnames}}
+{% endif %}
+
 {% include "squid.conf.acl-include_default_localnet.j2" %}
 {% include "squid.conf.acl-include_default_sslports.j2" %}
 {% include "squid.conf.acl-include_default_safeports.j2" %}
